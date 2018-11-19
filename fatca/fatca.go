@@ -3,7 +3,6 @@ package fatca
 import (
 	"encoding/xml"
 	"io/ioutil"
-	"log"
 	"net/http"
 	"strings"
 
@@ -11,10 +10,31 @@ import (
 )
 
 func Call(c echo.Context) error {
-	return c.String(http.StatusOK, "Hello, World!")
+	req := new(Request)
+
+	if err := c.Bind(req); err != nil {
+		return c.JSON(http.StatusInternalServerError, map[string]string{"message": err.Error(), "statuscode": "400"})
+		// return err
+	}
+
+	dataXML, err := convertToXML(req)
+
+	c.Logger().Print("Hello", c.Response().Header().Get(echo.HeaderXRequestID))
+
+	if err != nil {
+		return err
+	}
+
+	resp, err := getData(dataXML)
+
+	if err != nil {
+		return err
+	}
+
+	return c.JSON(http.StatusOK, resp.Body.GetPartyFATCAInfoResponse)
 }
 
-func convertToXML(input Request) string {
+func convertToXML(input *Request) (string, error) {
 	control := input.Control
 	data := Control{
 		Branch:        control.Branch,
@@ -47,31 +67,31 @@ func convertToXML(input Request) string {
 	resp, err := xml.MarshalIndent(soapenvEnvelope, " ", "  ")
 
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
-	return string(resp)
+	return string(resp), nil
 }
 
-func getData(text string) EnvelopeResponse {
+func getData(text string) (EnvelopeResponse, error) {
 
 	// resp, _ := API.Post(Url.Facta, Data.MockData())
 	url := "http://10.2.15.105:19080/FATCAHttpRouter/services/FATCA"
 	resp, err := post(url, text)
 
 	if err != nil {
-		log.Fatal(err)
+		return EnvelopeResponse{}, err
 	}
 
 	envelopeResponse := EnvelopeResponse{}
 
-	jsonErr := xml.Unmarshal(resp, &envelopeResponse)
+	err = xml.Unmarshal(resp, &envelopeResponse)
 
-	if jsonErr != nil {
-		log.Fatal(jsonErr)
+	if err != nil {
+		return EnvelopeResponse{}, err
 	}
 
-	return envelopeResponse
+	return envelopeResponse, nil
 }
 
 func post(url string, payload string) ([]byte, error) {
