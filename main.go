@@ -1,6 +1,7 @@
 package main
 
 import (
+	"io"
 	"os"
 
 	"github.com/labstack/echo"
@@ -22,7 +23,6 @@ func main() {
 		Compress:   true, // disabled by default
 	}
 	// Middleware
-	e.Use(middleware.Logger())
 	e.Use(middleware.LoggerWithConfig(middleware.LoggerConfig{
 		Format: `{"time":"${time_rfc3339_nano}","id":"${id}","remote_ip":"${remote_ip}","host":"${host}",` +
 			`"method":"${method}","uri":"${uri}","status":${status}, "latency":${latency},` +
@@ -39,8 +39,17 @@ func main() {
 	}))
 
 	// Routes
-	e.POST("/", fatca.Call)
+	e.POST("/", fatca.Call, mw(out))
 
 	// Start server
 	e.Logger.Fatal(e.Start(":1323"))
+}
+
+func mw(out io.Writer) echo.MiddlewareFunc {
+	return func(h echo.HandlerFunc) echo.HandlerFunc {
+		return func(c echo.Context) error {
+			c.Set("output", out)
+			return h(c)
+		}
+	}
 }

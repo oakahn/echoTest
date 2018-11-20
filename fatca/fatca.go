@@ -2,9 +2,9 @@ package fatca
 
 import (
 	"encoding/xml"
+	"io"
 	"io/ioutil"
 	"net/http"
-	"os"
 	"strings"
 
 	"github.com/labstack/echo"
@@ -19,8 +19,9 @@ func Call(c echo.Context) error {
 	}
 
 	dataXML, err := convertToXML(req)
-	f, _ := os.OpenFile("log2.log", os.O_RDWR|os.O_CREATE, 0644)
-	c.Logger().SetOutput(f)
+
+	out := c.Get("output").(io.Writer)
+	c.Logger().SetOutput(out)
 	c.Logger().Print("Hello", c.Response().Header().Get(echo.HeaderXRequestID))
 
 	if err != nil {
