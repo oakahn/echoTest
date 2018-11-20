@@ -4,6 +4,7 @@ import (
 	"encoding/xml"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
 	"github.com/labstack/echo"
@@ -18,7 +19,8 @@ func Call(c echo.Context) error {
 	}
 
 	dataXML, err := convertToXML(req)
-
+	f, _ := os.OpenFile("log2.log", os.O_RDWR|os.O_CREATE, 0644)
+	c.Logger().SetOutput(f)
 	c.Logger().Print("Hello", c.Response().Header().Get(echo.HeaderXRequestID))
 
 	if err != nil {
