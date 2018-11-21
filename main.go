@@ -1,16 +1,27 @@
 package main
 
 import (
+	"fmt"
 	"io"
 	"os"
 
 	"github.com/labstack/echo"
 	"github.com/labstack/echo/middleware"
 	"github.com/oakahn/echoTest/fatca"
+	"github.com/spf13/viper"
 	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func main() {
+
+	viper.SetConfigName("config")
+	viper.AddConfigPath("./")
+
+	err := viper.ReadInConfig()
+
+	if err != nil {
+		panic(fmt.Errorf("Fatal error config file : %s \n", err))
+	}
 	// Echo instance
 	e := echo.New()
 	hostname, _ := os.Hostname()

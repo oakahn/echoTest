@@ -2,12 +2,14 @@ package fatca
 
 import (
 	"encoding/xml"
+	"fmt"
 	"io"
 	"io/ioutil"
 	"net/http"
 	"strings"
 
 	"github.com/labstack/echo"
+	"github.com/spf13/viper"
 )
 
 func Call(c echo.Context) error {
@@ -77,9 +79,10 @@ func convertToXML(input *Request) (string, error) {
 }
 
 func getData(text string) (EnvelopeResponse, error) {
-
+	url := viper.GetString("FACTA.url")
+	fmt.Printf("%q", url)
 	// resp, _ := API.Post(Url.Facta, Data.MockData())
-	url := "http://10.2.15.105:19080/FATCAHttpRouter/services/FATCA"
+	// urlurl := "http://10.2.15.105:19080/FATCAHttpRouter/services/FATCA"
 	resp, err := post(url, text)
 
 	if err != nil {
